@@ -1,4 +1,4 @@
-
+# 내용 정리
 1. [route segment config](https://nextjs.org/docs/app/api-reference/file-conventions/route-segment-config) : page, layout, route handler 등을 라우트 별로 설정할 수 있는 기능
 2. [clsx](https://www.npmjs.com/package/clsx): optional 하게 class를 적용할 수 있게 돕는 libarary
 3. [CLS (Cumulative Layout Shift)](https://web.dev/articles/cls): 페이지의 전체 생명 주기에서 layout이 변형되는 정도를 측정한 값. nextjs는 font, image 등을 내부적으로 처리하여 CLS를 최적화 해둠
@@ -116,9 +116,7 @@
 	```
 	
 7. [왜 router.push 말고 Link 를 써야할까?](https://stackoverflow.com/questions/74959895/why-using-link-is-better-than-router-push)
-
-
-오늘의 영단어
+# 오늘의 영단어
 1. collisions: 충돌 (한 메모리에 두가지 이상의 records가 위치할 경우)
 2. populate: ~를 채우다 (fill과는 다름. CS에서는 주로 populate를 사용)
 3. fetch: go for and bring back
