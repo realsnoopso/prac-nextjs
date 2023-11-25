@@ -10,7 +10,7 @@
 	- priority를 지정해주면 해당 이미지의 로딩 우선순위가 올라감
 		```jsx
 		import Image from 'next/image'
-		import profilePic from '../public/me.png' 
+		import profilePic from '../public/me.png'
 		
 		export default function Page() { return <Image src={profilePic} alt="Picture of the author" priority />}
 		```
