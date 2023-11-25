@@ -34,4 +34,42 @@
 	```
 	- 혹은 vercel project setting에서 설정할 수 있음
 	- database region은 한번 설정하면 못바꾸니까 신중하게 설정할 것
-	- 
+7. Fetching Data
+	- relational databases를 위해 SQL 혹은 ORM (Prisma 같은) 걸 쓸 수 있다
+	- 나중에 prisma 세팅할 때 이거 보고 하면 좋을듯 [링크](https://vercel.com/docs/storage/vercel-postgres/using-an-orm#)
+	- 넥제는 prerender 해버리기 때문에 Server Component를 이용한 data fetching을 한 후 변경이 일어나더라도 반영이 안된다
+	- Requset Waterfalls?
+		- 네트워크 request가 이전 request의 종료에 의존적인 것
+		```ts
+		const revenue = await fetchRevenue();
+		const latestInvoices = await fetchLatestInvoices(); // wait for fetchRevenue() to finish
+		const {
+		  numberOfInvoices,
+		  numberOfCustomers,
+		  totalPaidInvoices,
+		  totalPendingInvoices,
+		} = await fetchCardData(); // wait for fetchLatestInvoices() to finish
+		```
+		- Promise.all() 또는 Promise.allSettled()를 사용하면 해결할 수 있음
+		- Promise.all()의 경우 하나라도 실패하면 모두 실패, 하지만 Promise.allSettled()는 그렇지 않음. 아래와 같이 보여줌.
+		```js
+		Promise.allSettled([
+		  Promise.resolve(33),
+		  new Promise((resolve) => setTimeout(() => resolve(66), 0)),
+		  99,
+		  Promise.reject(new Error("an error")),
+		]).then((values) => console.log(values));
+		
+		// [
+		//   { status: 'fulfilled', value: 33 },
+		//   { status: 'fulfilled', value: 66 },
+		//   { status: 'fulfilled', value: 99 },
+		//   { status: 'rejected', reason: Error: an error }
+		// ]
+		```
+
+
+# 오늘의 영단어
+- commented out: 주석 처리하다
+	- They are currently commented out to prevent the application from erroring.
+- 
