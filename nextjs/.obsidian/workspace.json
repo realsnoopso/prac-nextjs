@@ -26,9 +26,21 @@
                 "source": false
               }
             }
+          },
+          {
+            "id": "ffeec37f15d3f768",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "week 2.md",
+                "mode": "source",
+                "source": false
+              }
+            }
           }
         ],
-        "currentTab": 1
+        "currentTab": 2
       }
     ],
     "direction": "vertical"
@@ -78,8 +90,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 300
   },
   "right": {
     "id": "0b1a44d06125d86f",
@@ -95,7 +106,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "week 1.md",
+                "file": "week 2.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -112,7 +123,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "week 1.md",
+                "file": "week 2.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -135,7 +146,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "week 1.md"
+                "file": "week 2.md"
               }
             }
           }
@@ -156,8 +167,11 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "4b79abbd70ac92d9",
+  "active": "ffeec37f15d3f768",
   "lastOpenFiles": [
-    "week 1.md"
+    "Screen Recording 2023-11-25 at 11.43.28 PM.mov",
+    "Screen Recording 2023-11-25 at 11.18.37 PM.mov",
+    "week 1.md",
+    "week 2.md"
   ]
 }
