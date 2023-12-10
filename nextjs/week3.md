@@ -66,8 +66,47 @@ export default function Page() {
 ```
 - 서버 액션은 또한 nextjs 캐싱과도 잘 결합되어 있음
 	- `revalidatePath`, `revalidateTag`와 같은 api들을 사용
+- form에 post api를 바로 붙일 수 있음
+```jsx
+<form action={createInvoice}>
+</form
+```
+
+- zod에서 string을 넘버로 자동으로 변환해주는 옵션 있음
+	- amount: z.coerce.number()
+- revalidatePath: prefetching이 일어난 path들이 있는데, 캐시를 무시하고자 할 때 사용 가능
+```jsx
+'use server';
+ 
+import { z } from 'zod';
+import { sql } from '@vercel/postgres';
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
+ 
+// ...
+ 
+export async function createInvoice(formData: FormData) {
+  const { customerId, amount, status } = CreateInvoice.parse({
+    customerId: formData.get('customerId'),
+    amount: formData.get('amount'),
+    status: formData.get('status'),
+  });
+  const amountInCents = amount * 100;
+  const date = new Date().toISOString().split('T')[0];
+ 
+  await sql`
+    INSERT INTO invoices (customer_id, amount, status, date)
+    VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
+  `;
+ 
+  revalidatePath('/dashboard/invoices');
+  redirect('/dashboard/invoices');
+}
+```
+
 # 오늘의 영단어
 - jarring: 어색한
 - stagger: 휘청거리다 / staggered effect: 시차를 두는 효과
 - vulnerable: 상하기 쉬운, 취약한
+- versatile: 융통성 있는
 - 
