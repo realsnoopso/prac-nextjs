@@ -17,11 +17,57 @@ export default async function LatestInvoices({}: {}) {
 	const latestInvoices = await fetchLatestInvoices();
 	...
 	```
-# 10. 
+# 10. Partial Prerendering
+- next 14에만 적용되는 실험적인 피처임
+- 특징
+	- Fast edge delivery
+	- Does not block TTFB on cold start
+		- ttfb: Time to first byte 웹서버의 응답에 대한 매트릭
+	- Streaming dynamic delivery
+	- No extra round trips for dynamic content
+		- round trip time: 인터넷 상에서 송신지부터 목적지까지 패킷이 왕복하는데 걸리는 시간
+	- Fast access to core region databases and APIs
+	- One simple programming model between statics and dynamics parts
+- 역사 나중에 공부해보면 좋을 것 같은 키워드
+	- https://en.wikipedia.org/wiki/Server_Side_Includes
+	- Edge SSR
+- Server component의 장점
+	- This allows you to keep expensive data fetches and logic on the server, reduces the client-side JavaScript bundle, and prevents your database secrets from being exposed to the client.
+	- 외부에 database secrets를 노출시키지 않아도 되고, client-side JS 번들 사이즈를 줄일 수도 있음
 
+# 11. Adding Search and Pagination
+- 여기 예시에서는 seach state를 관리하기 위해 상태를 URL search params로 관리했음 (클라이언트 사이드 렌더링이였음 useState를 썼겠지?)
+	- 위와 같이 했을시 장점은 다음과 같음
+		- URL을 북마킹, 공유 가능해짐
+		- SSR이 가능해짐, 즉 initial load가 가능해짐
+		- 분석 및 트래킹이 가능해짐
+- **`defaultValue` vs. `value` / Controlled vs. Uncontrolled**
+	- native input이 state를 관리하는 property가 defaultValue
+- server page comonent에서는 searchParams를 prop으로 읽어올 수 있음
 
-
+# 12. Mutating Data
+- server action을 사용함으로서 많은 보안 취약점을 극복할 수 있음
+- form element에서 server action 사용법
+	- form data를 받을 수 있음
+	- js가 disable 된 상태에서도 작동함
+```jsx
+// Server Component
+export default function Page() {
+  // Action
+  async function create(formData: FormData) {
+    'use server';
+ 
+    // Logic to mutate data...
+  }
+ 
+  // Invoke the action using the "action" attribute
+  return <form action={create}>...</form>;
+}
+```
+- 서버 액션은 또한 nextjs 캐싱과도 잘 결합되어 있음
+	- `revalidatePath`, `revalidateTag`와 같은 api들을 사용
 # 오늘의 영단어
 - jarring: 어색한
 - stagger: 휘청거리다 / staggered effect: 시차를 두는 효과
+- vulnerable: 상하기 쉬운, 취약한
 - 
