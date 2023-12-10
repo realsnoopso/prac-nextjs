@@ -18,7 +18,6 @@
 			- 하지만 넥제는 soft navigation으로 상태가 매번 업데이트되지 않도록 도와줌
 		- Back and Foward Navigation
 			- 자동으로 scroll position을 유지시킴
-
 # 6. Setting Up Your Database
 - route.ts 파일에 region을 설정해둘 수 있음. 이렇게 하면 latency 감소
 ```ts

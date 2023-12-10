@@ -16,31 +16,19 @@
             }
           },
           {
-            "id": "4b79abbd70ac92d9",
+            "id": "4ef9510d00b7e300",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "week 1.md",
-                "mode": "source",
-                "source": false
-              }
-            }
-          },
-          {
-            "id": "ffeec37f15d3f768",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "week 2.md",
+                "file": "week3.md",
                 "mode": "source",
                 "source": false
               }
             }
           }
         ],
-        "currentTab": 2
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -107,7 +95,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "week 2.md",
+                "file": "week3.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -124,7 +112,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "week 2.md",
+                "file": "week3.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -147,7 +135,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "week 2.md"
+                "file": "week3.md"
               }
             }
           }
@@ -168,11 +156,12 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "ffeec37f15d3f768",
+  "active": "4ef9510d00b7e300",
   "lastOpenFiles": [
+    "week3.md",
+    "week 2.md",
     "Screenshot 2023-11-26 at 12.42.28 PM.png",
     "week 1.md",
-    "week 2.md",
     "Screenshot 2023-11-26 at 12.10.51 AM.png",
     "Screen Recording 2023-11-25 at 11.43.28 PM.mov",
     "Screen Recording 2023-11-25 at 11.18.37 PM.mov"
