@@ -224,9 +224,135 @@ export async function updateInvoice(id: string, formData: FormData) {
 }
 ```
 
-# 보안
+### 보안
 https://nextjs.org/blog/security-nextjs-server-components-actions
 위 문서 꼭 읽어보자 시간 날 때!
 
+# Handling Errors
+- 엥 왜 try 안에 안넣지..?
+```js
+export async function createInvoice(formData: FormData) {
+  const { customerId, amount, status } = CreateInvoice.parse({
+    customerId: formData.get('customerId'),
+    amount: formData.get('amount'),
+    status: formData.get('status'),
+  });
+ 
+  const amountInCents = amount * 100;
+  const date = new Date().toISOString().split('T')[0];
+ 
+  try {
+    await sql`
+      INSERT INTO invoices (customer_id, amount, status, date)
+      VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
+    `;
+  } catch (error) {
+    return {
+      message: 'Database Error: Failed to Create Invoice.',
+    };
+  }
+ 
+  revalidatePath('/dashboard/invoices');
+  redirect('/dashboard/invoices');
+}
+```
+
+- redirect가 try/catch 블록 외부에 있는 이유는 redirect가 throwing error를 던질 수 있어서임 (이 친구도 promise였던 것 같음) redirect를 그래서 try/catch 문 바깥에 두는 것.
+
+그런데 try catch 문 바깥에서 갑작스럽게 나타낸 에러가 있을 수 있음.
+그래서 error.tsx를 사용함
+
+```js
+'use client';
+ 
+import { useEffect } from 'react';
+ 
+export default function Error({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  useEffect(() => {
+    // Optionally log the error to an error reporting service
+    console.error(error);
+  }, [error]);
+ 
+  return (
+    <main className="flex h-full flex-col items-center justify-center">
+      <h2 className="text-center">Something went wrong!</h2>
+      <button
+        className="mt-4 rounded-md bg-blue-500 px-4 py-2 text-sm text-white transition-colors hover:bg-blue-400"
+        onClick={
+          // Attempt to recover by trying to re-render the invoices route
+          () => reset()
+        }
+      >
+        Try again
+      </button>
+    </main>
+  );
+}
+```
+
+- error : 에러 객체를 받음
+- rest: error boundary를 reset할 수 있는 함수. 해당 route segment를 재렌더하는 것을 시도하게 됨
+
+- 없는 경로로 이동하게 되면 error.tsx가 에러를 잡게 됨. notFound 메소드를 적절히 써야 함
+```js
+import { fetchInvoiceById, fetchCustomers } from '@/app/lib/data';
+import { updateInvoice } from '@/app/lib/actions';
+import { notFound } from 'next/navigation';
+ 
+export default async function Page({ params }: { params: { id: string } }) {
+  const id = params.id;
+  const [invoice, customers] = await Promise.all([
+    fetchInvoiceById(id),
+    fetchCustomers(),
+  ]);
+ 
+  if (!invoice) {
+    notFound();
+  }
+ 
+  // ...
+}
+```
+
+이렇게 지정해주고, not-found.tsx 파일을 폴더 내부에 만들어주면 그 컴포넌트가 렌더링되게 됨.
+
+
+```js
+import Link from 'next/link';
+import { FaceFrownIcon } from '@heroicons/react/24/outline';
+ 
+export default function NotFound() {
+  return (
+    <main className="flex h-full flex-col items-center justify-center gap-2">
+      <FaceFrownIcon className="w-10 text-gray-400" />
+      <h2 className="text-xl font-semibold">404 Not Found</h2>
+      <p>Could not find the requested invoice.</p>
+      <Link
+        href="/dashboard/invoices"
+        className="mt-4 rounded-md bg-blue-500 px-4 py-2 text-sm text-white transition-colors hover:bg-blue-400"
+      >
+        Go Back
+      </Link>
+    </main>
+  );
+}
+```
+
+# Improving Accessibility
+https://web.dev/learn/accessibility/
+이거 읽어보자!!
+
+- default로 Next.js가 eslint-plugin-jsx-ally 플러그인을 사용해서 accessibility 이슈를 잡아줌.
+- alt 텍스트가 없으면 `aria-*`, role을 사용하라고 경고해줌
+- next lint 실행하면 됨
+
+
 # 오늘의 단어
 - collision 충돌 (ID collision)
+- abrupt 불시의, 갑작스러운 (abrupt failure)
