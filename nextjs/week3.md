@@ -8,8 +8,6 @@
 	<Suspense fallback={<RevenueChartSkeleton />}>
 		<RevenueChart />
 	</Suspense>
-
-
 ...
 
 
@@ -17,6 +15,7 @@ export default async function LatestInvoices({}: {}) {
 	const latestInvoices = await fetchLatestInvoices();
 	...
 	```
+- 리액트 query와 같은 경우 데이터 베이스와 패칭을 자동으로 해줌. 이게 nextjs 에서 내부적으로 해주는거면 쿼리로 대체할 수 있을듯
 # 10. Partial Prerendering
 - next 14에만 적용되는 실험적인 피처임
 - 특징
@@ -36,7 +35,7 @@ export default async function LatestInvoices({}: {}) {
 	- 외부에 database secrets를 노출시키지 않아도 되고, client-side JS 번들 사이즈를 줄일 수도 있음
 
 # 11. Adding Search and Pagination
-- 여기 예시에서는 seach state를 관리하기 위해 상태를 URL search params로 관리했음 (클라이언트 사이드 렌더링이였음 useState를 썼겠지?)
+- 여기 예시에서는 seach state를 관리하기 위해 상태를 URL search params로 관리했음
 	- 위와 같이 했을시 장점은 다음과 같음
 		- URL을 북마킹, 공유 가능해짐
 		- SSR이 가능해짐, 즉 initial load가 가능해짐
@@ -69,7 +68,7 @@ export default function Page() {
 - form에 post api를 바로 붙일 수 있음
 ```jsx
 <form action={createInvoice}>
-</form
+</form>
 ```
 
 - zod에서 string을 넘버로 자동으로 변환해주는 옵션 있음
@@ -109,4 +108,3 @@ export async function createInvoice(formData: FormData) {
 - stagger: 휘청거리다 / staggered effect: 시차를 두는 효과
 - vulnerable: 상하기 쉬운, 취약한
 - versatile: 융통성 있는
-- 
