@@ -45,6 +45,10 @@ export default function Form({
 
 HTML에서는 action에 URL을 넘김. 하지만 React에서는 action attribute가 특별한 prop이 됨. Server Actions는 POST API endpoint를 생성함. 그래서 따로 API endpoint를 생성할 필요가 없는거
 
+![[Screenshot 2023-12-16 at 5.56.29 PM.png]]
+![[Screenshot 2023-12-16 at 5.56.36 PM.png]]
+post 요청이 해당 페이지로 날아감. 그런데 form의 action attribute에서는 허용되고 다른 곳에서는 안된다. 더 자세한 작동 원리까진 모르게씀..
+
 이제 formData를 추출해보자!
 
 들어온 formData를 그냥 추출하기만 하면됨.
@@ -123,7 +127,6 @@ export async function createInvoice(formData: FormData) {
 
 - 좀 더 안전하게 짜기 위해서 단위를 cents로 설정해주면 부동소수점 오류를 없애고 정확도를 높일 수 있음
 - Date 형식 변환해주기
-
 
 - 가장 중요한 Revalidate!!
 	- Next는 Client-side Router Cache를 갖고 있어서 라우트 세그먼트를 브라우저에 일정 시간동안 저장하게 된다. prefetching과 더불어 이 캐시는 user가 빠르게 탐색할 수 있게 도와줌. 
@@ -322,7 +325,6 @@ export default async function Page({ params }: { params: { id: string } }) {
 
 이렇게 지정해주고, not-found.tsx 파일을 폴더 내부에 만들어주면 그 컴포넌트가 렌더링되게 됨.
 
-
 ```js
 import Link from 'next/link';
 import { FaceFrownIcon } from '@heroicons/react/24/outline';
@@ -474,7 +476,489 @@ export async function createInvoice(prevState: State, formData: FormData) {
 - `id="customer-error"`: 이게 식별자
 - `aria-live="polite"`: 에러가 있음을 스크린 리더가 공손하게 알려줌(?) 방해 받지 않도록 알리는 것이 포인트인 듯. 
 
+  
+  
 
+# 15. Adding Authentication
+
+- 검증이란 시스템이 유저가 유저인지 검증하는 것을 말함
+- username과 패스워드 확인, 혹은 verification code 보내기.. 2FA 는 보안을 증가시켜줌
+
+
+Authentication: 유저가 유저인지 확인하는 것. 신원을 확인. username과 password를 건넴으로써. (누구인지)
+Authorization: 아이덴티티가 확인되면, 어플리케이션의 어떠한 범위까지 허락할 것인지를 결정하는 것 (뭘 할 수 있는가)
+
+NextAuth 라이브러리 사용하라고 추천함
+
+```js
+npm install next-auth@beta
+```
+
+14 버전이랑 호환되는 건 아직 beta 버전이라고는 함.
+
+```
+openssl rand -base64 32
+```
+
+터미널에서 위 명령어 실행해서 secret key 만들기
+```
+AUTH_SECRET=your-secret-key
+```
+
+vercel 환경 변수에도 넣어주기!
+그 다음은 page option 만들기
+
+```js
+import type { NextAuthConfig } from 'next-auth';
+	export const authConfig = {
+	pages: {
+		signIn: '/login',
+	},
+};
+
+```
+
+  
+
+이 설정으로 custom sign-in, sign-out, error 페이지를 설정 가능함
+
+이거 설정하지 않으면 NextAuth.js가 설정한 default page로 떨어지게 됨
+
+  
+
+다음 Next.js Midddleware 로 routes 보호하기!
+
+  
+
+```js
+import type { NextAuthConfig } from 'next-auth';
+ 
+export const authConfig = {
+  pages: {
+    signIn: '/login',
+  },
+  callbacks: {
+    authorized({ auth, request: { nextUrl } }) {
+      const isLoggedIn = !!auth?.user;
+      const isOnDashboard = nextUrl.pathname.startsWith('/dashboard');
+      if (isOnDashboard) {
+        if (isLoggedIn) return true;
+        return false; // Redirect unauthenticated users to login page
+      } else if (isLoggedIn) {
+        return Response.redirect(new URL('/dashboard', nextUrl));
+      }
+      return true;
+    },
+  },
+  providers: [], // Add providers with an empty array for now
+} satisfies NextAuthConfig;
+```
+
+  
+
+routes를 보호해주는 역할을 함. 로그인하지 않은 유저가 dashboard로 접근하는 것을 막아줌
+
+- authorized 콜백은 request가 authorized 되어 있는지 검증함. (Middleware를 통해서!)
+
+- auth, request properties를 받음
+
+- auth property는 user 세션을 포함함. request property는 imcoming request를 포함
+
+- providers 옵션은 array임. login option을 설정 가능.
+
+- https://nextjs.org/learn/dashboard-app/adding-authentication#adding-the-credentials-provider
+
+- 위 링크 참고
+
+- 참고
+	
+	```js
+	
+	import NextAuth from "next-auth"
+	
+	import CredentialsProvider from "next-auth/providers/credentials"
+	
+	export default NextAuth({
+	
+	providers: [
+	
+	CredentialsProvider({
+	
+	async authorize(credentials) {
+	
+	const authResponse = await fetch("/users/login", {
+	
+	method: "POST",
+	
+	headers: {
+	
+	"Content-Type": "application/json",
+	
+	},
+	
+	body: JSON.stringify(credentials),
+	
+	})
+	
+	if (!authResponse.ok) {
+	
+	return null
+	
+	}
+	
+	const user = await authResponse.json()
+	
+	return user
+	
+	},
+	
+	}),
+	
+	],
+	
+	})
+	
+	...
+	
+	import NextAuth from 'next-auth';
+	
+	import { authConfig } from './auth.config';
+	
+	import Credentials from 'next-auth/providers/credentials';
+	
+	export const { auth, signIn, signOut } = NextAuth({
+	
+	...authConfig,
+	
+	providers: [Credentials({})],
+	
+	});
+	
+	```
+	  
+
+```js
+import type { NextAuthConfig } from 'next-auth';
+ 
+export const authConfig = {
+  pages: {
+    signIn: '/login',
+  },
+  callbacks: {
+    authorized({ auth, request: { nextUrl } }) {
+      const isLoggedIn = !!auth?.user;
+      const isOnDashboard = nextUrl.pathname.startsWith('/dashboard');
+      if (isOnDashboard) {
+        if (isLoggedIn) return true;
+        return false; // Redirect unauthenticated users to login page
+      } else if (isLoggedIn) {
+        return Response.redirect(new URL('/dashboard', nextUrl));
+      }
+      return true;
+    },
+  },
+  providers: [], // Add providers with an empty array for now
+} satisfies NextAuthConfig;
+```
+
+  
+
+```js
+
+// middleware.ts
+
+import NextAuth from "next-auth";
+import { authConfig } from "./auth.config";
+export default NextAuth(authConfig).auth;
+
+export const config = {
+	// https://nextjs.org/docs/app/building-your-application/routing/middleware#matcher
+	matcher: ["/((?!api|_next/static|_next/image|.*\\.png$).*)"],
+};
+```
+
+- 미들웨어에서 matcher로 특정한 path 에서만 실행 가능하게 변경 가능함
+
+- 여기에 적힌 path는 접속하기 전에 무조건 미들웨어로 먼저 들렸다감
+
+  
+
+그다음 auth.ts 파일 생성해서 authConfig를 넣어줌.
+
+  
+
+Credentials도 설정해줌
+
+- 유저가 username과 password로 로그인하게 도와줌
+
+- 꼭 Credentials 를 써야 하는건 아니고 Oauth, email도 좋은 대안이 될 수 있음
+
+- Although we're using the Credentials provider, it's generally recommended to use alternative providers such as [OAuth](https://authjs.dev/getting-started/providers/oauth-tutorial) or [email](https://authjs.dev/getting-started/providers/email-tutorial) providers. See the [NextAuth.js docs](https://authjs.dev/getting-started/providers) for a full list of options.
+
+  
+
+Validation도 잘 해주기!
+
+```js
+import NextAuth from 'next-auth';
+import Credentials from 'next-auth/providers/credentials';
+import { authConfig } from './auth.config';
+import { sql } from '@vercel/postgres';
+import { z } from 'zod';
+import type { User } from '@/app/lib/definitions';
+import bcrypt from 'bcrypt';
+import { sql } from '@vercel/postgres';
+import type { User } from '@/app/lib/definitions';
+import bcrypt from 'bcrypt';
+
+async function getUser(email: string): Promise<User | undefined> { 
+	try { const user = await sql<User>`SELECT * FROM users WHERE email=${email}`; return user.rows[0];` } 
+	catch (error) { console.error('Failed to fetch user:', error); throw new Error('Failed to fetch user.'); 
+}}
+ 
+// ...
+ 
+export const { auth, signIn, signOut } = NextAuth({
+  ...authConfig,
+  providers: [
+    Credentials({
+      async authorize(credentials) {
+        if (parsedCredentials.success) { 
+	        const { email, password } = parsedCredentials.data; 
+	        const user = await getUser(email); 
+	        if (!user) return null; 
+		}
+ 
+        if (parsedCredentials.success) {
+          const { email, password } = parsedCredentials.data;
+          const user = await getUser(email);
+          if (!user) return null;
+          const passwordsMatch = await bcrypt.compare(password, user.password);
+ 
+          if (passwordsMatch) return user;
+        }
+ 
+        console.log('Invalid credentials');
+        return null;
+      },
+    }),
+  ],
+});
+```
+
+bcrypt.compare 를 사용하여 password 체크
+
+
+```js
+import { signIn } from '@/auth';
+import { AuthError } from 'next-auth';
+ 
+// ...
+ 
+export async function authenticate(
+  prevState: string | undefined,
+  formData: FormData,
+) {
+  try {
+    await signIn('credentials', formData);
+  } catch (error) {
+    if (error instanceof AuthError) {
+      switch (error.type) {
+        case 'CredentialsSignin':
+          return 'Invalid credentials.';
+        default:
+          return 'Something went wrong.';
+      }
+    }
+    throw error;
+  }
+}
+```
+
+
+그 다음 action 생성해주기
+```js
+import { signIn } from '@/auth';
+import { AuthError } from 'next-auth';
+ 
+// ...
+ 
+export async function authenticate(
+  prevState: string | undefined,
+  formData: FormData,
+) {
+  try {
+    await signIn('credentials', formData);
+  } catch (error) {
+    if (error instanceof AuthError) {
+      switch (error.type) {
+        case 'CredentialsSignin':
+          return 'Invalid credentials.';
+        default:
+          return 'Something went wrong.';
+      }
+    }
+    throw error;
+  }
+}
+```
+
+
+```jsx
+'use client';
+ 
+import { lusitana } from '@/app/ui/fonts';
+import {
+  AtSymbolIcon,
+  KeyIcon,
+  ExclamationCircleIcon,
+} from '@heroicons/react/24/outline';
+import { ArrowRightIcon } from '@heroicons/react/20/solid';
+import { Button } from '@/app/ui/button';
+import { useFormState, useFormStatus } from 'react-dom';
+import { authenticate } from '@/app/lib/actions';
+ 
+export default function LoginForm() {
+  const [errorMessage, dispatch] = useFormState(authenticate, undefined);
+ 
+  return (
+    <form action={dispatch} className="space-y-3">
+      <div className="flex-1 rounded-lg bg-gray-50 px-6 pb-4 pt-8">
+        <h1 className={`${lusitana.className} mb-3 text-2xl`}>
+          Please log in to continue.
+        </h1>
+        <div className="w-full">
+          <div>
+            <label
+              className="mb-3 mt-5 block text-xs font-medium text-gray-900"
+              htmlFor="email"
+            >
+              Email
+            </label>
+            <div className="relative">
+              <input
+                className="peer block w-full rounded-md border border-gray-200 py-[9px] pl-10 text-sm outline-2 placeholder:text-gray-500"
+                id="email"
+                type="email"
+                name="email"
+                placeholder="Enter your email address"
+                required
+              />
+              <AtSymbolIcon className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500 peer-focus:text-gray-900" />
+            </div>
+          </div>
+          <div className="mt-4">
+            <label
+              className="mb-3 mt-5 block text-xs font-medium text-gray-900"
+              htmlFor="password"
+            >
+              Password
+            </label>
+            <div className="relative">
+              <input
+                className="peer block w-full rounded-md border border-gray-200 py-[9px] pl-10 text-sm outline-2 placeholder:text-gray-500"
+                id="password"
+                type="password"
+                name="password"
+                placeholder="Enter password"
+                required
+                minLength={6}
+              />
+              <KeyIcon className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500 peer-focus:text-gray-900" />
+            </div>
+          </div>
+        </div>
+        <LoginButton />
+        <div
+          className="flex h-8 items-end space-x-1"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          {errorMessage && (
+            <>
+              <ExclamationCircleIcon className="h-5 w-5 text-red-500" />
+              <p className="text-sm text-red-500">{errorMessage}</p>
+            </>
+          )}
+        </div>
+      </div>
+    </form>
+  );
+}
+ 
+function LoginButton() {
+  const { pending } = useFormStatus();
+ 
+  return (
+    <Button className="mt-4 w-full" aria-disabled={pending}>
+      Log in <ArrowRightIcon className="ml-auto h-5 w-5 text-gray-50" />
+    </Button>
+  );
+}
+```
+
+# 16. Adding Metadata
+
+web development에서는 metadata는 웹페이지에 대한 디테일을 제공해준다. user에게는 안보이지만 HTML 안에 삽입되어 뒤에서 작동함. search engine에게는 상당히 중요함.
+
+SEO에 연관되기 때문에 매우 중요하다. Open graph와 같은 metadata는 shared links 의 형태를 멋지게 만들어줌. 
+
+- title: 웹사이트 타이틀. SEO에 진짜 중요
+- description: 사이트의 overview를 제공함
+- keyword: 검색 엔진이 page들을 indexing 하는 것에 도움을 줌
+	```
+	<meta name="keywords" content="keyword1, keyword2, keyword3" />
+	```
+- open graph metadata: 이 메타데이터는 webpage가 소셜미디어에 공유되었을 때의 형태를 결정함
+	```
+	<meta property="og:title" content="Title Here" />
+	<meta property="og:description" content="Description Here" />
+	<meta property="og:image" content="image_url_here" />
+	```
+- favicon: 파비콘을 설정할 때 사용
+	```
+	<link rel="icon" href="path/to/favicon.ico" />
+	```
+
+두가지 방법으로 구현 가능
+- config-based : metadata object export 혹은 generateMetadata function 사용 (layout.js 혹은 page.js)
+- file-based
+	- `favicon.ico`, `apple-icon.jpg`, and `icon.jpg`: Utilized for favicons and icons
+	- `opengraph-image.jpg` and `twitter-image.jpg`: Employed for social media images
+	- `robots.txt`: Provides instructions for search engine crawling
+	- `sitemap.xml`: Offers information about the website's structure
+
+favicon이랑 open-graph 이미지는 /app 폴더에 넣으면 자동으로 인식됨 (위 형식 지켜서)
+
+dynamic OG 이미지를 생성하려면 다음 문서 참고하기
+https://nextjs.org/docs/app/api-reference/functions/image-response
+
+
+```jsx
+// /app/layout.tsx
+import { Metadata } from 'next';
+ 
+export const metadata: Metadata = {
+  title: {
+    template: '%s | Acme Dashboard',
+    default: 'Acme Dashboard',
+  },
+  description: 'The official Next.js Learn Dashboard built with App Router.',
+  metadataBase: new URL('https://next-learn-dashboard.vercel.sh'),
+};
+```
+
+타이틀 템플릿 이용해서 동적으로 내용을 변경 가능함
+
+```jsx
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+	title: 'Invoices',
+};
+```
+
+이렇게 하면 실제 출력은 Invoices | Acme Dashboard 이렇게 나옴
 # 오늘의 단어
 - collision 충돌 (ID collision)
 - abrupt 불시의, 갑작스러운 (abrupt failure)
