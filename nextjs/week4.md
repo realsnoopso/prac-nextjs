@@ -352,6 +352,128 @@ https://web.dev/learn/accessibility/
 - alt 텍스트가 없으면 `aria-*`, role을 사용하라고 경고해줌
 - next lint 실행하면 됨
 
+그럼 form accessibility 높이려면 어떻게 해야할까
+
+
+AT support (assistive technologies)
+- semantic HTML: div 쓰지 말기. input, option, etc 이런 태그 쓰기. 왜 div 쓰면 안되는지 알았다... (자동으로 너비 조절되는 input 만들때 div가 더 만들기 편해서 쓰려고 했는데...) 
+- labelling: <label/> 과 htmlFor 속성은 form field의 속성을 명시적으로 보여줌. 
+- focus outline: 포커싱 될 때 구분 잘 해주기. tab으로 가능한지 확인할 수 있음
+
+form validation
+null을 제출하면 에러가 남
+그래서 서버 제출 전에 항상 검증을 해야 함
+
+require attribute를 추가해서 검증을 강제 할 수 있음 (브라우저에서 제공하는 기능)
+
+비어있으면 자동으로 알람
+이게 클라이언트 사이드에서 제어하는 법.
+
+<input/> 및 <select/>에서 사용 가능
+
+```js
+<input
+  id="amount"
+  name="amount"
+  type="number"
+  placeholder="Enter USD amount"
+  className="peer block w-full rounded-md border border-gray-200 py-2 pl-10 text-sm outline-2 placeholder:text-gray-500"
+  required
+/>
+```
+![[Screenshot 2023-12-16 at 3.34.52 PM.png]]
+server side validation은 어떻게 할까?
+
+이제부터 useFormState를 사용할 것임. (react-dom의)
+
+```js
+export async function createInvoice(prevState: State, formData: FormData) {
+  // Validate form using Zod
+  const validatedFields = CreateInvoice.safeParse({
+    customerId: formData.get('customerId'),
+    amount: formData.get('amount'),
+    status: formData.get('status'),
+  });
+ 
+  // If form validation fails, return errors early. Otherwise, continue.
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Missing Fields. Failed to Create Invoice.',
+    };
+  }
+ 
+  // Prepare data for insertion into the database
+  const { customerId, amount, status } = validatedFields.data;
+  const amountInCents = amount * 100;
+  const date = new Date().toISOString().split('T')[0];
+ 
+  // Insert data into the database
+  try {
+    await sql`
+      INSERT INTO invoices (customer_id, amount, status, date)
+      VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
+    `;
+  } catch (error) {
+    // If a database error occurs, return a more specific error.
+    return {
+      message: 'Database Error: Failed to Create Invoice.',
+    };
+  }
+ 
+  // Revalidate the cache for the invoices page and redirect the user.
+  revalidatePath('/dashboard/invoices');
+  redirect('/dashboard/invoices');
+}
+```
+
+이렇게 하면 깔끔하게 formData를 검증할 수 있음
+
+```js
+<form action={dispatch}>
+  <div className="rounded-md bg-gray-50 p-4 md:p-6">
+    {/* Customer Name */}
+    <div className="mb-4">
+      <label htmlFor="customer" className="mb-2 block text-sm font-medium">
+        Choose customer
+      </label>
+      <div className="relative">
+        <select
+          id="customer"
+          name="customerId"
+          className="peer block w-full rounded-md border border-gray-200 py-2 pl-10 text-sm outline-2 placeholder:text-gray-500"
+          defaultValue=""
+          aria-describedby="customer-error"
+        >
+          <option value="" disabled>
+            Select a customer
+          </option>
+          {customerNames.map((name) => (
+            <option key={name.id} value={name.id}>
+              {name.name}
+            </option>
+          ))}
+        </select>
+        <UserCircleIcon className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500" />
+      </div>
+      <div id="customer-error" aria-live="polite" aria-atomic="true">
+        {state.errors?.customerId &&
+          state.errors.customerId.map((error: string) => (
+            <p className="mt-2 text-sm text-red-500" key={error}>
+              {error}
+            </p>
+          ))}
+      </div>
+    </div>
+    // ...
+  </div>
+</form>
+```
+
+- `aria-describedby="customer-error"`: select 엘리먼트와 error message container 사이의 관계를 만들어줌.  id가 customer-error 인 것끼리 매칭이 됨. 
+- `id="customer-error"`: 이게 식별자
+- `aria-live="polite"`: 에러가 있음을 스크린 리더가 공손하게 알려줌(?) 방해 받지 않도록 알리는 것이 포인트인 듯. 
+
 
 # 오늘의 단어
 - collision 충돌 (ID collision)
